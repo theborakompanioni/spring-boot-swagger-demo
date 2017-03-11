@@ -1,0 +1,28 @@
+spring.application.name: 'spring-boot-swagger-demo'
+spring.profiles.active: production
+
+app.name: spring-boot-swagger-demo
+app.description: a spring-boot + swagger demo app
+
+server.port: 8080
+server.use-forward-headers: true
+server.compression.enabled: true
+
+endpoints.jmx.domain: spring-boot-swagger-demo
+endpoints.jmx.unique-names: true
+
+management.port: 9001
+management.context-path: /actuator
+
+#spring.boot.admin.url: http://localhost:9080
+
+# LOGGING
+logging.path: ./var/log
+logging.file: application.log
+logging.config: classpath:logback.xml
+logging.level.org.springframework: INFO
+
+
+spring.jpa.show-sql: false
+spring.jpa.database-platform: 'org.tbk.sbswdemo.sqlite.SQLiteDialect'
+spring.jpa.hibernate.ddl-auto: 'update'

@@ -1,0 +1,98 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.1.RELEASE")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+tasks.withType(Test) {
+    testLogging {
+        // set options for log level LIFECYCLE
+        events TestLogEvent.STARTED, TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED
+        showExceptions true
+        exceptionFormat TestExceptionFormat.FULL
+        showCauses true
+        showStackTraces true
+
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = '|  ', endItem = '  |'
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            }
+        }
+    }
+}
+
+sourceSets {
+    main.java.srcDir "src/main/java"
+    test.java.srcDir "src/test/java"
+}
+
+test {
+    // * enable on demand
+    // testLogging.showStandardStreams = true
+}
+
+jar {
+    baseName = 'tbk-spring-boot-swagger-demo'
+    version = '0.0.1-SNAPSHOT'
+}
+
+bootRepackage {
+    mainClass = 'org.tbk.sbswdemo.Application'
+}
+
+repositories {
+    mavenCentral()
+
+    // springfox snapshots
+    maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local/' }
+}
+
+dependencies {
+    // tag::jetty[]
+    compile("org.springframework.boot:spring-boot-starter-web") {
+        exclude module: "spring-boot-starter-tomcat"
+    }
+    compile("org.springframework.boot:spring-boot-starter-jetty")
+    // end::jetty[]
+
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.8.7")
+
+    compile("org.springframework.boot:spring-boot-starter-data-rest")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+
+    compile("org.springframework.boot:spring-boot-starter-security")
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+    compile("org.springframework.boot:spring-boot-devtools")
+
+    compile("com.zaxxer:HikariCP:2.6.0") {
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+    compile("org.xerial:sqlite-jdbc:3.16.1")
+
+    // springfox-data-rest:2.6.1 has a problem on startup which is fixed in 2.7.0-SNAPSHOT
+    compile("io.springfox:springfox-swagger2:2.7.0-SNAPSHOT")
+    compile("io.springfox:springfox-data-rest:2.7.0-SNAPSHOT")
+    compile("io.springfox:springfox-swagger-ui:2.7.0-SNAPSHOT")
+
+    compile("com.google.guava:guava:19.0")
+    compile("org.apache.commons:commons-lang3:3.5")
+    compileOnly("org.projectlombok:lombok:1.16.14")
+
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+}

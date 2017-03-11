@@ -1,0 +1,14 @@
+spring.application.name: 'spring-boot-swagger-demo'
+spring.profiles.active: test
+
+app.name: spring-boot-swagger-demo
+app.description: a spring-boot + swagger demo app
+
+server.use-forward-headers: false
+server.compression.enabled: false
+
+endpoints.jmx.domain: spring-boot-swagger-demo-test
+endpoints.jmx.unique-names: true
+
+spring.jpa.database-platform: 'org.tbk.sbswdemo.sqlite.SQLiteDialect'
+spring.jpa.hibernate.ddl-auto: 'create-drop'
