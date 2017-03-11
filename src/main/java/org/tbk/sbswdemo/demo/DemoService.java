@@ -10,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.tbk.sbswdemo.Application;
 import org.tbk.sbswdemo.model.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -25,7 +24,9 @@ public class DemoService {
     private final ModelRepository modelRepository;
 
     private final Supplier<DemoUser.DemoUserBuilder> demoUserBuilderSupplier = Suppliers
-            .memoize(this::createDemoUserBuilder);
+            .memoize(() -> createUserBuilder("demo", "demo"));
+    private final Supplier<DemoUser.DemoUserBuilder> adminUserBuilderSupplier = Suppliers
+            .memoize(() -> createUserBuilder("admin", "admin"));
 
     public DemoService(PasswordEncoder passwordEncoder,
                        UserRepository userRepository,
@@ -39,12 +40,54 @@ public class DemoService {
         this.modelRepository = requireNonNull(modelRepository);
     }
 
-    public void printGoalsOfDemoUser() {
-        User demoUser = this.getOrCreateDemoUser().getOrigin();
+    public void createDemoData() {
+        getOrCreateAdminUser();
+        getOrCreateDemoUser();
+        createDemoDatabaseEntities();
+    }
 
-        log.info("Goals of demo user:");
-        log.info("-------------------------------");
-        log.info("");
+    private void createDemoDatabaseEntities() {
+        if (!oemRepository.findAll(Application.standardPageRequest.get()).hasContent()) {
+            Oem oem1 = new Oem("oem" + RandomStringUtils.randomAscii(5), "");
+            Oem oem2 = new Oem("oem" + RandomStringUtils.randomAscii(5), "");
+            Oem oem3 = new Oem("oem" + RandomStringUtils.randomAscii(5), "");
+            Oem oem4 = new Oem("oem" + RandomStringUtils.randomAscii(5), "");
+            Oem oem5 = new Oem("oem" + RandomStringUtils.randomAscii(5), "");
+            List<Oem> oems = Lists.newArrayList(oem1, oem2, oem3, oem4, oem5);
+            oemRepository.save(oems);
+
+            Series series1 = new Series("series" + RandomStringUtils.randomAscii(5), oem1);
+            Series series2 = new Series("series" + RandomStringUtils.randomAscii(5), oem2);
+            Series series3 = new Series("series" + RandomStringUtils.randomAscii(5), oem3);
+            Series series4 = new Series("series" + RandomStringUtils.randomAscii(5), oem4);
+            Series series5 = new Series("series" + RandomStringUtils.randomAscii(5), oem5);
+            List<Series> series = Lists.newArrayList(series1, series2, series3, series4, series5);
+            seriesRepository.save(series);
+
+            Model model1 = new Model("model" + RandomStringUtils.randomAscii(5), series1);
+            Model model2 = new Model("model" + RandomStringUtils.randomAscii(5), series2);
+            Model model3 = new Model("model" + RandomStringUtils.randomAscii(5), series3);
+            Model model4 = new Model("model" + RandomStringUtils.randomAscii(5), series4);
+            Model model5 = new Model("model" + RandomStringUtils.randomAscii(5), series5);
+
+            List<Model> models = Lists.newArrayList(model1, model2, model3, model4, model5);
+            modelRepository.save(models);
+        }
+    }
+
+    public DemoUser getOrCreateAdminUser() {
+        final User user = userRepository.findByName("admin", Application.standardPageRequest.get())
+                .getContent()
+                .stream()
+                .findFirst()
+                .orElseGet(() -> createUser(
+                        adminUserBuilderSupplier.get(),
+                        Lists.newArrayList("ROLE_ADMIN", "ROLE_USER")
+                ).getOrigin());
+
+        return demoUserBuilderSupplier.get()
+                .origin(user)
+                .build();
     }
 
     public DemoUser getOrCreateDemoUser() {
@@ -52,73 +95,35 @@ public class DemoService {
                 .getContent()
                 .stream()
                 .findFirst()
-                .orElseGet(() -> createDemoUser().getOrigin());
+                .orElseGet(() -> createUser(
+                        demoUserBuilderSupplier.get(),
+                        Lists.newArrayList("ROLE_DEMO", "ROLE_USER")
+                ).getOrigin());
 
         return demoUserBuilderSupplier.get()
                 .origin(user)
                 .build();
     }
 
-    private DemoUser createDemoUser() {
-        final DemoUser.DemoUserBuilder demoUserBuilder = demoUserBuilderSupplier.get();
-        final ArrayList<String> authorities = Lists.newArrayList("ROLE_ADMIN", "ROLE_USER");
+    private DemoUser createUser(DemoUser.DemoUserBuilder demoUserBuilder, List<String> authorities) {
+        requireNonNull(authorities);
 
         User demoUser = new User(demoUserBuilder.name(), demoUserBuilder.encryptedPassword(), authorities);
 
         userRepository.save(demoUser);
         log.info("Created demo user: {}", demoUser);
 
-        oemRepository.save(new Oem("Goal1", "Description1"));
-        oemRepository.save(new Oem("Goal2", "Description2"));
-        oemRepository.save(new Oem("Goal3", "Description3"));
-        oemRepository.save(new Oem("Goal4", "Description4"));
-        oemRepository.save(new Oem("Goal5", "Description5"));
-
         return demoUserBuilder
                 .origin(demoUser)
                 .build();
     }
 
-    private DemoUser.DemoUserBuilder createDemoUserBuilder() {
-        final String username = "demo";
-        final String password = "demo";
+    private DemoUser.DemoUserBuilder createUserBuilder(String username, String password) {
         return DemoUser.builder()
                 .name(username)
                 .password(password)
                 .encryptedPassword(passwordEncoder.encode(password));
     }
 
-
-    public void createDemoData() {
-        User demoUser = getOrCreateDemoUser().getOrigin();
-
-
-        if (!oemRepository.findAll(Application.standardPageRequest.get()).hasContent()) {
-            Oem oem1 = new Oem("list" + RandomStringUtils.randomAscii(5), "");
-            Oem oem2 = new Oem("list" + RandomStringUtils.randomAscii(5), "");
-            Oem oem3 = new Oem("list" + RandomStringUtils.randomAscii(5), "");
-            Oem oem4 = new Oem("list" + RandomStringUtils.randomAscii(5), "");
-            Oem oem5 = new Oem("list" + RandomStringUtils.randomAscii(5), "");
-            List<Oem> oems = Lists.newArrayList(oem1, oem2, oem3, oem4, oem5);
-            oemRepository.save(oems);
-
-            Series list1 = new Series("list" + RandomStringUtils.randomAscii(5), oem1);
-            Series list2 = new Series("list" + RandomStringUtils.randomAscii(5), oem2);
-            Series list3 = new Series("list" + RandomStringUtils.randomAscii(5), oem3);
-            Series list4 = new Series("list" + RandomStringUtils.randomAscii(5), oem4);
-            Series list5 = new Series("list" + RandomStringUtils.randomAscii(5), oem5);
-            List<Series> series = Lists.newArrayList(list1, list2, list3, list4, list5);
-            seriesRepository.save(series);
-
-            Model item1 = new Model("item" + RandomStringUtils.randomAscii(5), list1);
-            Model item2 = new Model("item" + RandomStringUtils.randomAscii(5), list2);
-            Model item3 = new Model("item" + RandomStringUtils.randomAscii(5), list3);
-            Model item4 = new Model("item" + RandomStringUtils.randomAscii(5), list4);
-            Model item5 = new Model("item" + RandomStringUtils.randomAscii(5), list5);
-
-            List<Model> models = Lists.newArrayList(item1, item2, item3, item4, item5);
-            modelRepository.save(models);
-        }
-    }
 
 }

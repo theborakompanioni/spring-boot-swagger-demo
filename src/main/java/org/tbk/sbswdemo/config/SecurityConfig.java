@@ -40,16 +40,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        http.authorizeRequests().anyRequest().permitAll();
+
+        /*
         String loginPage = "/login.html";
 
         http.authorizeRequests()
                 .antMatchers(loginPage).permitAll()
+                .antMatchers("/null/swagger-resources/configuration/ui").permitAll()
+                .antMatchers("/webjars/**").permitAll()
+                .antMatchers("/swagger-ui.html").permitAll()
                 .antMatchers("/admin/**").hasRole("ADMIN")
                 .antMatchers("/user/**").hasRole("USER")
                 // All other requests require authentication
                 .anyRequest().fullyAuthenticated().and()
                 .httpBasic().and()
                 .logout().and()
-                .csrf().disable();
+                .csrf().disable();*/
     }
 }
